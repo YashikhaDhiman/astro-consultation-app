@@ -1,0 +1,16 @@
+# node
+node_modules/
+.env
+
+# frontend
+frontend/.next/
+frontend/node_modules/
+frontend/.env.local
+
+# backend
+backend/node_modules/
+backend/.env
+
+# OS & IDE
+.DS_Store
+.vscode/
