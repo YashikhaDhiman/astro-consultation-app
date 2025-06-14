@@ -44,3 +44,39 @@ A full-stack real-time astrology consultation platform where customers can join 
 
 ### 📁 Project Structure
 
+astro-consultation-app/
+├── backend/ # Express + MongoDB + Socket.IO
+├── frontend/ # Next.js frontend
+
+### 🔨 Backend Setup
+cd backend
+npm install
+cp .env.example .env
+# Add your MongoDB URI to .env
+npm run dev
+
+### 🎨 Frontend Setup
+cd frontend
+npm install
+npm run dev
+Visit: http://localhost:3000
+
+### 📦 API Overview
+POST /api/queue/join — Join queue
+GET /api/messages/:ticketId — Get message history
+POST /api/messages/send — Send a message
+GET /api/messages — Astrologer inbox 
+POST /api/auth/signup — Signup
+POST /api/auth/login — Login
+
+### 🛡️ Roles & Access
+| Role       | Access                                      |
+| ---------- | ------------------------------------------- |
+| Customer   | Join queue, chat with astrologer, view chat |
+| Astrologer | View inbox, chat with all customers         |
+
+### ✍️ Author
+Made with ❤️ by Yashikha Dhiman
+
+
+```bash

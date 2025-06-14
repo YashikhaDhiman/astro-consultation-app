@@ -1,89 +1,74 @@
 'use client';
+
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { io } from 'socket.io-client';
+import { use } from 'react';
 
-const socket = io('http://localhost:5000'); // match your backend
+export default function ChatPage({ params }: { params: Promise<{ ticketId: string }> }) {
+  const { ticketId } = use(params); // Unwrap the params Promise
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : null;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
 
-interface Message {
-  _id?: string;
-  sender: string;
-  text: string;
-  timestamp?: string;
-  ticketId: string;
-}
-
-export default function ChatPage() {
-  const { ticketId } = useParams();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [text, setText] = useState('');
-
-  // Connect and join room
   useEffect(() => {
-    socket.emit('joinRoom', ticketId);
-
-    fetch(`http://localhost:5000/api/messages/${ticketId}`)
-      .then(res => res.json())
-      .then(data => setMessages(data));
-
-    socket.on('receiveMessage', (msg: Message) => {
-      setMessages(prev => [...prev, msg]);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [ticketId]);
-
-  const sendMessage = async () => {
-    if (!text.trim()) return;
-
-    const message: Message = {
-      sender: 'customer',
-      text,
-      ticketId: ticketId as string
+    const fetchMessages = async () => {
+      const res = await fetch(`http://localhost:5000/api/messages/${ticketId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setMessages(data);
     };
 
-    // Emit to socket
-    socket.emit('sendMessage', message);
+    fetchMessages();
+  }, [ticketId, token]);
 
-    // Persist to DB
-    await fetch('http://localhost:5000/api/messages/send', {
+  const handleSend = async () => {
+    if (!newMessage.trim()) return;
+
+    const res = await fetch('http://localhost:5000/api/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(message)
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ text: newMessage }),
     });
 
-    setText('');
+    const data = await res.json();
+    setMessages([...messages, data]);
+    setNewMessage('');
   };
 
   return (
-    <main className="max-w-xl mx-auto p-4">
-      <h1 className="text-xl font-semibold mb-4">Your Consultation</h1>
+    <div className="p-4 flex flex-col gap-4">
+      <h2 className="text-xl font-bold">Chat</h2>
 
-      <div className="space-y-2 mb-4 max-h-96 overflow-y-auto border p-4 rounded bg-gray-50">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`p-2 rounded ${msg.sender === 'customer' ? 'bg-blue-100' : 'bg-green-100'}`}>
-            <p className="text-sm font-semibold">{msg.sender === 'customer' ? 'You' : 'Astrologer'}</p>
-            <p>{msg.text}</p>
+      <div className="flex flex-col gap-2 border p-4 rounded max-h-[400px] overflow-y-auto">
+        {messages.map((msg: any, index) => (
+          <div key={index} className="p-2 bg-gray-100 rounded">
+            <div className="text-xs text-gray-600">{msg.sender?.name || 'You'}:</div>
+            <div>{msg.text}</div>
           </div>
         ))}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 mt-4">
         <input
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Type your message"
-          className="chat-input"
+          type="text"
+          className="border px-4 py-2 flex-1 rounded"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Type your message..."
         />
         <button
-          onClick={sendMessage}
-          className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+          onClick={handleSend}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
         >
           Send
         </button>
       </div>
-    </main>
+    </div>
   );
 }
