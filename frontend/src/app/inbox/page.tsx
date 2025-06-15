@@ -22,7 +22,19 @@ export default function InboxPage() {
   useEffect(() => {
     fetch('http://localhost:5000/api/messages')
       .then(res => res.json())
-      .then(setInbox);
+      .then((messages: InboxItem[]) => {
+        // Group messages by ticketId, show latest per ticket
+        const grouped: { [ticketId: string]: InboxItem } = {};
+        messages.forEach(msg => {
+          if (
+            !grouped[msg.ticketId] ||
+            new Date(msg.timestamp) > new Date(grouped[msg.ticketId].timestamp)
+          ) {
+            grouped[msg.ticketId] = msg;
+          }
+        });
+        setInbox(Object.values(grouped));
+      });
   }, []);
 
   return (
