@@ -1,63 +1,76 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-interface InboxItem {
-  _id: string; // message ID
-  text: string;
-  sender: string;
-  timestamp: string;
-  ticketId: string;
-  customer: {
-    name: string;
-    email: string;
-    priority: number;
-  };
-}
-
 export default function InboxPage() {
-  const [inbox, setInbox] = useState<InboxItem[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState('');
+  const [user, setUser] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/messages')
-      .then(res => res.json())
-      .then((messages: InboxItem[]) => {
-        // Group messages by ticketId, show latest per ticket
-        const grouped: { [ticketId: string]: InboxItem } = {};
-        messages.forEach(msg => {
-          if (
-            !grouped[msg.ticketId] ||
-            new Date(msg.timestamp) > new Date(grouped[msg.ticketId].timestamp)
-          ) {
-            grouped[msg.ticketId] = msg;
-          }
-        });
-        setInbox(Object.values(grouped));
-      });
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+    }
+
+    setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!mounted || !user || user.role !== 'astrologer') {
+      if (mounted) router.push('/');
+      return;
+    }
+
+    const fetchAllMessages = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/messages/all', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error('Unauthorized or failed to load');
+        const data = await res.json();
+        setMessages(data);
+      } catch (err) {
+        console.error(err);
+        alert('Could not fetch messages.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllMessages();
+  }, [mounted, token, user, router]);
+
+  if (!mounted || loading) return <div className="p-6">Loading messages...</div>;
+
+  if (!messages.length) return <div className="p-6">No messages found.</div>;
+
   return (
-    <main className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Astrologer's Inbox</h1>
-      <div className="space-y-4">
-        {inbox.map(item => (
-          <div
-            key={item._id}
-            onClick={() => router.push(`/chat/${item.ticketId}`)}
-            className="p-4 border rounded cursor-pointer hover:bg-gray-100"
+    <div className="p-6">
+      <h2 className="text-xl font-bold mb-4">Inbox</h2>
+      <ul className="space-y-4">
+        {messages.map((msg, index) => (
+          <li
+            key={index}
+            className="p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 shadow"
+            onClick={() => router.push(`/chat/${msg.sender?._id}`)}
           >
-            <div className="flex justify-between">
-              <div>
-                <p className="font-semibold">{item.customer.name}</p>
-                <p className="text-sm text-gray-500">Priority: {item.customer.priority}</p>
-              </div>
-              <span className="text-xs text-gray-400">{new Date(item.timestamp).toLocaleTimeString()}</span>
-            </div>
-            <p className="mt-2">{item.text}</p>
-          </div>
+            <div className="text-sm font-semibold text-gray-800">{msg.sender?.name || 'Unknown Sender'}</div>
+            <div className="text-xs text-gray-600">{msg.sender?.email || 'Unknown Email'}</div>
+            <div className="text-sm text-gray-900 mt-1">{msg.text || 'Empty message'}</div>
+          </li>
         ))}
-      </div>
-    </main>
+      </ul>
+    </div>
   );
 }

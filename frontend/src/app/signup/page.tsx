@@ -13,7 +13,7 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:5000/api/auth/signup', {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData),
@@ -24,7 +24,7 @@ export default function SignupPage() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       window.dispatchEvent(new Event('authChanged')); // 👈 trigger header update
-      router.push(data.user.role === 'astrologer' ? '/inbox' : '/chat');
+      router.push(data.user.role === 'astrologer' ? '/inbox' : `/chat/${data.user.id}`);
     } else {
       alert(data.message || 'Signup failed');
     }
@@ -32,16 +32,16 @@ export default function SignupPage() {
 
   return (
     <div className="p-6 max-w-md mx-auto">
-      <h2 className="text-xl mb-4 font-bold">Sign Up</h2>
+      <h2 className="text-2xl mb-4 font-bold text-gray-900">Sign Up</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input name="name" placeholder="Name" onChange={handleChange} required className="w-full p-2 border" />
-        <input name="email" type="email" placeholder="Email" onChange={handleChange} required className="w-full p-2 border" />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} required className="w-full p-2 border" />
-        <select name="role" onChange={handleChange} className="w-full p-2 border">
+        <input name="name" placeholder="Name" onChange={handleChange} required className="w-full p-3 border border-gray-400 rounded text-gray-900 placeholder-gray-600" />
+        <input name="email" type="email" placeholder="Email" onChange={handleChange} required className="w-full p-3 border border-gray-400 rounded text-gray-900 placeholder-gray-600" />
+        <input name="password" type="password" placeholder="Password" onChange={handleChange} required className="w-full p-3 border border-gray-400 rounded text-gray-900 placeholder-gray-600" />
+        <select name="role" onChange={handleChange} className="w-full p-3 border border-gray-400 rounded text-gray-900 placeholder-gray-600">
           <option value="customer">Customer</option>
           <option value="astrologer">Astrologer</option>
         </select>
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 w-full">Sign Up</button>
+        <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded">Sign Up</button>
       </form>
     </div>
   );

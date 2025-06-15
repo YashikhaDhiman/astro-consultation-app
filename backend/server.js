@@ -31,7 +31,7 @@ app.use(cors({
 app.use(express.json());
 app.use('/api/queue', queueRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api', authRoutes);
+app.use('/api/auth', authRoutes);
 app.get('/api/messages/:ticketId', async (req, res) => {
   const { ticketId } = req.params;
   const messages = await Message.find({ ticketId }).sort({ timestamp: 1 });
