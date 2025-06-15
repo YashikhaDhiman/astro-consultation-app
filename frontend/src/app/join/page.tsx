@@ -15,7 +15,7 @@ export default function JoinPage() {
     e.preventDefault();
     setError('');
 
-    const res = await fetch('http://localhost:5000/api/queue/join', {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/queue/join`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)

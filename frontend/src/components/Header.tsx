@@ -1,53 +1,77 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const [user, setUser] = useState<any>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [showNav, setShowNav] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    // Load once
+    setShowNav(true);
     const storedUser = localStorage.getItem('user');
-    if (storedUser) setUser(JSON.parse(storedUser));
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        if (parsed && parsed._id) {
+          setUser(parsed);
+        }
+      } catch {
+        setUser(null);
+      }
+    }
+    setHydrated(true);
 
-    // Listen for login/signup events
     const handleAuthChange = () => {
       const updatedUser = localStorage.getItem('user');
       setUser(updatedUser ? JSON.parse(updatedUser) : null);
     };
-
     window.addEventListener('authChanged', handleAuthChange);
     return () => window.removeEventListener('authChanged', handleAuthChange);
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
     localStorage.removeItem('token');
-    window.dispatchEvent(new Event('authChanged')); // update header
-    window.location.href = '/';
+    localStorage.removeItem('user');
+    setUser(null);
+    router.push('/');
   };
 
   return (
-    <header className="flex justify-between items-center px-6 py-4 shadow-md">
-      <Link href="/" className="text-xl font-bold">🔮 AstroConnect</Link>
-      <nav className="flex gap-4 items-center">
-        {user ? (
+    <header className="flex justify-between items-center p-4 bg-gray-900 text-white shadow-md">
+      <Link href="/" className="text-2xl font-semibold tracking-wide">🔮 AstroConsult</Link>
+      <div className="flex gap-4 items-center">
+        {!user && (
           <>
-            {user.role === 'astrologer' ? (
-              <Link href="/inbox" className="text-blue-600 font-medium">Inbox</Link>
-            ) : (
-              <Link href={`/chat/${user._id}`} className="text-green-600 font-medium">Chat</Link>
-            )}
-            <button onClick={handleLogout} className="text-red-600 font-medium">Logout</button>
-          </>
-        ) : (
-          <>
-            <Link href="/login">Login</Link>
-            <Link href="/signup">Signup</Link>
+            <Link href="/login" className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white">Login</Link>
+            <Link href="/signup" className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white">Signup</Link>
           </>
         )}
-      </nav>
+        {user && (
+          <>
+            {user.role === 'customer' && (
+              <Link href={`/chat/${user.id}`} className="px-3 py-1 rounded bg-purple-600 hover:bg-purple-700 text-white">Chat</Link>
+            )}
+            {user.role === 'astrologer' && (
+              <Link href="/inbox" className="px-3 py-1 rounded bg-yellow-600 hover:bg-yellow-700 text-black">Inbox</Link>
+            )}
+            <button
+              onClick={() => {
+                localStorage.removeItem('user');
+                localStorage.removeItem('token');
+                window.dispatchEvent(new Event('authChanged'));
+                location.href = '/';
+              }}
+              className="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white"
+            >
+              Logout
+            </button>
+          </>
+        )}
+      </div>
     </header>
+
   );
 }

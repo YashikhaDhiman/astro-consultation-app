@@ -13,7 +13,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:5000/api/auth/login', {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData),
@@ -32,11 +32,31 @@ export default function LoginPage() {
 
   return (
     <div className="p-6 max-w-md mx-auto">
-      <h2 className="text-xl mb-4 font-bold">Log In</h2>
+      <h2 className="text-2xl mb-4 font-bold text-gray-900">Log In</h2>
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input name="email" type="email" placeholder="Email" onChange={handleChange} required className="w-full p-2 border" />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} required className="w-full p-2 border" />
-        <button type="submit" className="bg-green-600 text-white px-4 py-2 w-full">Log In</button>
+        <input
+          name="email"
+          type="email"
+          placeholder="Email"
+          onChange={handleChange}
+          required
+          className="w-full p-3 border border-gray-400 rounded text-gray-900 placeholder-gray-600"
+        />
+        <input
+          name="password"
+          type="password"
+          placeholder="Password"
+          onChange={handleChange}
+          required
+          className="w-full p-3 border border-gray-400 rounded text-gray-900 placeholder-gray-600"
+        />
+        <button
+          type="submit"
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded"
+        >
+          Log In
+        </button>
       </form>
     </div>
   );
